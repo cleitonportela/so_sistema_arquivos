@@ -37,7 +37,8 @@ class LinkedFileSystem:
         while pos < len(content):
             # encontra bloco livre
             for blk in self.blocks:
-                if blk.data == '': break
+                if blk.data == '':
+                    break
             pedaco = content[pos:pos+BLOCK_SIZE]
             blk.data = pedaco
             inode.block_indices.append(blk.index)
@@ -79,11 +80,9 @@ class LinkedFileSystem:
         return file
 
     def ls(self):
-        # listar entradas do cwd
         self.cwd.read()
 
     def cd(self, name: str):
-        # navegação: '.', '..' ou subdiretório
         if name == '.':
             print(self.cwd.path)
             return True
@@ -92,7 +91,6 @@ class LinkedFileSystem:
                 self.cwd = self.cwd.parent
             print(self.cwd.path)
             return True
-        # busca subdir
         for entry in self.cwd.inode.dir_entries:
             if entry.name == name and entry.type == 'DIR':
                 self.cwd = entry
@@ -102,12 +100,10 @@ class LinkedFileSystem:
         return False
 
     def moveFile(self, name: str, target_path: str):
-        # encontra arquivo no cwd
         item = next((e for e in self.cwd.inode.dir_entries if e.name == name), None)
         if not item:
             print('Arquivo não encontrado')
             return False
-        # resolve target_path
         parts = target_path.strip('/').split('/')
         cur = self.root
         for p in parts[1:]:
@@ -115,11 +111,9 @@ class LinkedFileSystem:
             if not cur:
                 print('Caminho inválido')
                 return False
-        # remove do cwd e anexa ao destino
         self.cwd.inode.dir_entries.remove(item)
         cur.inode.dir_entries.append(item)
         item.parent = cur
-        # atualiza paths
         def upd(f, base):
             f.path = base + '/' + f.name
             if f.type == 'DIR':
@@ -130,7 +124,6 @@ class LinkedFileSystem:
         return True
 
     def writeFile(self, name: str, content: str):
-        # simula escrita
         item = next((e for e in self.cwd.inode.dir_entries if e.name==name and e.type!='DIR'), None)
         if not item:
             print('Arquivo não encontrado ou não é arquivo')
@@ -140,7 +133,6 @@ class LinkedFileSystem:
         return True
 
     def readFile(self, name: str):
-        # simula leitura
         item = next((e for e in self.cwd.inode.dir_entries if e.name==name and e.type!='DIR'), None)
         if not item:
             print('Arquivo não encontrado ou não é arquivo')
@@ -150,117 +142,15 @@ class LinkedFileSystem:
         return True
 
     def removeFile(self, name: str):
-        # remoção de arquivo ou diretório
         item = next((e for e in self.cwd.inode.dir_entries if e.name==name), None)
         if not item:
             print('Arquivo/Diretório não encontrado')
             return False
-        # libera blocos se arquivo
         if item.type != 'DIR':
             for idx in item.inode.block_indices:
                 blk = self.blocks[idx]
                 blk.data = ''
                 blk.next = None
-        # se diretório, recursivamente removemos entradas (garbage collector simulado)
         self.cwd.inode.dir_entries.remove(item)
         print(f"{name} excluído com sucesso")
         return True
-
-def imprimir_ajuda():
-    print("""
-Comandos disponíveis:
-  ls
-  cd <diretório|. |..>
-  mkdir <nome_do_diretório>
-  touch <nome_do_arquivo> [conteúdo inicial]
-  mv <nome> <caminho/destino>
-  write <nome_do_arquivo> <novo_conteúdo>
-  read <nome_do_arquivo>
-  rm <nome>
-  help
-  exit
-""")
-
-def main():
-    fs = LinkedFileSystem()
-    imprimir_ajuda()
-
-    while True:
-        try:
-            linha = input(f"{fs.cwd.path}> ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print("\nEncerrando.")
-            break
-
-        if not linha:
-            continue
-
-        # divide respeitando aspas
-        partes = shlex.split(linha)
-        cmd, *args = partes
-
-        if cmd == 'ls':
-            fs.ls()
-
-        elif cmd == 'cd':
-            if len(args) != 1:
-                print("Uso: cd <diretório|. |..>")
-            else:
-                fs.cd(args[0])
-
-        elif cmd == 'mkdir':
-            if len(args) != 1:
-                print("Uso: mkdir <nome_do_diretório>")
-            else:
-                result = fs.newFile(args[0], 'DIR')
-                if result:
-                    print(f"Diretório '{args[0]}' criado.")
-
-        elif cmd == 'touch':
-            if len(args) == 0:
-                print("Uso: touch <nome_do_arquivo> [conteúdo]")
-            else:
-                name = args[0]
-                content = args[1] if len(args) > 1 else ''
-                result = fs.newFile(name, 'TEXT', content)
-                if result:
-                    print(f"Arquivo '{name}' criado.")
-
-        elif cmd == 'mv':
-            if len(args) != 2:
-                print("Uso: mv <nome> <caminho/destino>")
-            else:
-                fs.moveFile(args[0], args[1])
-
-        elif cmd == 'write':
-            if len(args) < 2:
-                print("Uso: write <nome_do_arquivo> <novo_conteúdo>")
-            else:
-                name = args[0]
-                content = " ".join(args[1:])
-                fs.writeFile(name, content)
-
-        elif cmd == 'read':
-            if len(args) != 1:
-                print("Uso: read <nome_do_arquivo>")
-            else:
-                fs.readFile(args[0])
-
-        elif cmd == 'rm':
-            if len(args) != 1:
-                print("Uso: rm <nome>")
-            else:
-                fs.removeFile(args[0])
-
-        elif cmd in ('help', '?'):
-            imprimir_ajuda()
-
-        elif cmd in ('exit', 'quit'):
-            print("Encerrando LinkedFS.")
-            break
-
-        else:
-            print(f"Comando desconhecido: {cmd}. Digite 'help' para ver a lista.")
-
-if __name__ == '__main__':
-    main()

@@ -188,7 +188,25 @@ class FileSystem:
             
         print("Não existe arquivo com o nome " + fileName + " no diretório atual")
         return False
-    
+    def readFile(self, fileName: str):
+        """
+        Alias para openFile, mantendo a interface de comparar_desempenho().
+        """
+        return self.openFile(fileName)
+
+    def writeFile(self, fileName: str, content: str):
+        """
+        Atualiza o conteúdo de um arquivo texto existente.
+        """
+        for entry in self.cwd.data:
+            if entry.name == fileName and entry.type != "DIR":
+                entry.data = content
+                print(f"Escrito em {fileName}: {len(content)} bytes")
+                return True
+        print("Arquivo não encontrado ou não é arquivo")
+        return False    
+
+
     #Move um arquivo do diretório atual para o diretório alvo
     #Recebe o diretório alvo na forma de caminho
     #Retorna False se a operação falhar
