@@ -7,7 +7,6 @@ def imprimir_ajuda():
 Escolha o FS para testar:
   1 - FileSystem (inode-based)
   2 - LinkedFileSystem (chain-based)
-  3 - Comparar desempenho FileSystem vs LinkedFileSystem
   help - mostrar ajuda
   exit - sair
 """)
@@ -26,12 +25,21 @@ def repl_fs(fs):
 
         if cmd == 'ls':
             fs.ls()
-        elif cmd == 'cd' and args:
-            fs.cd(args[0])
+        elif cmd == 'open' and args:
+            if (args[0] == ".."):
+                fs.goUpwards()
+            else:
+                fs.openFile(args[0])
         elif cmd == 'mkdir' and args:
-            fs.newFile(args[0], 'DIR')
+            if (args[0] == ".."):
+                print("Nome inválido")
+            else:
+                fs.newFile(args[0], 'DIR')
         elif cmd == 'touch' and args:
-            fs.newFile(args[0], 'TEXT', args[1] if len(args)>1 else '')
+            if (args[0] == ".."):
+                print("Nome inválido")
+            else:
+                fs.newFile(args[0], 'TEXT', args[1] if len(args)>1 else '')
         elif cmd == 'mv' and len(args)==2:
             fs.moveFile(args[0], args[1])
         elif cmd == 'write' and len(args)>=2:
@@ -125,8 +133,8 @@ def main():
         elif opc == '2':
             lfs = LinkedFileSystem()
             repl_fs(lfs)
-        elif opc == '3':
-            comparar_desempenho()
+        #elif opc == '3':
+            #comparar_desempenho()
         elif opc in ('help','?'):
             continue
         elif opc in ('exit','quit'):

@@ -82,7 +82,7 @@ class LinkedFileSystem:
     def ls(self):
         self.cwd.read()
 
-    def cd(self, name: str):
+    def openFile(self, name: str):
         if name == '.':
             print(self.cwd.path)
             return True
